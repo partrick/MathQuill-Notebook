@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=624">
+    <title>MathQuill Test Page</title>
+
+    <link rel="stylesheet" type="text/css" href="style/home.css">
+    <link rel="stylesheet" type="text/css" href="style/blackbird.css">
+    <link rel="stylesheet" type="text/css" href="style/mathquill.css">
+
+  <!-- . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  -->
+    <style type="text/css">
+      body {
+        font-size: .8em;
+      }
+
+      #body {
+        padding: 1.25em;
+      }
+
+      h1 {
+        font-size: 2.5em;
+      }
+
+      #steps_list {
+        list-style: decimal;
+        padding-left: 1em;
+      }
+
+      .qb-editor-step {
+        /* display: block; */
+        padding-bottom: 4px;
+        margin-bottom: 16px;
+        border-bottom: 2px solid #e0e0e0;
+      }
+
+      .qb-row {
+        font-family: monospaced;
+      }
+
+      @media print {
+        .non-printable {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <!-- . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  -->
+  <body><div id="body">
+    <h1 align="center">MathQuill Notebook</h1>
+
+    <!-- the library is a collection of QuillBook objects -->
+    <div id="library">
+      <p>
+        Select workbook:
+        <select id="selectQB" data-bind="options: Books, optionsText: 'Title', value: SelectedBook, optionsCaption: 'Choose a workbook'">
+        </select>
+      </p>
+
+      <div>
+        <input id="txtNewWorkbookName"></input>
+        <button id="btnAddWorkbook">Add Workbook</button>
+      </div>      
+    </div>
+
+    <hr style="clear: both;" />
+
+    <!-- . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  -->
+    <!-- the currently selected quillbook is a collection of problems -->
+    <div id="quillbook">
+
+      <div data-bind="visible: Title">      
+        <h3 align="center" data-bind="text: Title"></h3>
+
+      <div>
+        <div style="float: right;">
+          <button id="btnSaveWorkbook" data-bind="css: { dirty: IsDirty }">Save Workbook</button>
+          <button id="btnDeleteWorkbook">Delete Workbook</button>
+          <button id="btnExport">Export</button>
+        </div>
+      </div>
+
+        <p>
+          Select problem:
+          <select id="selectQP" data-bind="options: Problems, optionsText: 'Name', value: SelectedProblem, optionsCaption: 'Choose a problem'">
+          </select>
+        </p>
+
+        <fieldset class="non-printable">
+          <legend>New Problem</legend>
+          <input id="txtNewProblemName"></input>
+          <button id="btnAddProblem">Add Problem</button>
+
+          <div>
+            <input id="txtQuestion" style="width: 100%;"></input>
+          </div>
+
+          <div id="txtQuestionExprContainer">
+            <span id="txtQuestionExpr" class="mathquill-editable"></span>
+          </div>
+        </fieldset>
+
+      <!-- . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  -->
+      </div>
+    </div>
+
+<!--
+    <h3>Problem</h3>
+
+    <div>
+      <span class="mathquill-embedded-latex">\frac{\left(3^3+3\cdot7\right)}{-2^4}+\frac{3\left(-5\right)^2}{-15}</span>
+    </div>
+-->
+    <!-- . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  -->
+    <div id="quillproblem"><div data-bind="visible: Name">
+      <h3>Problem: <span data-bind="text: Name"></span></h3>
+
+      <div data-bind="text: Question"></div>
+      <div><span class="qb-expr" data-bind="mathQuill: QuestionExpr"></span></div>
+
+      <h3>Solution Steps:</h3>
+      <div id="steps">
+         <ol id="steps_list" data-bind="foreach: Steps">
+          <li class="qb-editor-step" style="position: relative;">
+            <div style="float: right;" class="non-printable">
+              [<a href="#" class="qb-edit-step">Edit</a>]
+              [<a href="#" class="qb-delete-step">Delete</a>]
+            </div>
+            <div data-bind="text: Comment"></div>
+            <div>
+              <div data-bind="visible: QB.ShowRaw"><div data-bind="text: Expression" class="qb-raw"></div></div>
+              <span class="qb-expr" data-bind="mathQuill: Expression"></span>
+            </div>
+          </li>
+         </ol>
+      </div>
+    
+      <!-- . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  -->
+      <div id="editor" class="non-printable">
+        <hr />
+
+        <p id="editor">
+         Editting step 
+            <span data-bind="text: Editting, visible: Editting() >= 0"></span>
+            <span data-bind="visible: Editting() === -1">*</span>
+        </p>
+
+        <div>Explanation: <input id="txtExplain" type="text" style="width: 400px;"></span></div>
+        <div id="txtEditorContainer" style="margin-top 12px; margin-bottom: 20px;">Expression: <span id="txtEditor" class="mathquill-editable"></span></div>
+
+        <div>
+          <button id="btnSaveStep" data-bind="visible: Editting() >= 0">Save</button>
+          <button id="btnAddStep"  data-bind="visible: Editting() === -1">Insert</button>
+          <button id="btnAddStepAtEnd">Insert at end</button>
+
+          <button id="btnClearStep">Clear</button>
+        </div>
+
+        <div>
+          <a id="lnkShowRaw" href="#" style="font-size: 80%; font-weight: normal;">Show raw expression</a>
+        </div>
+      </div>
+    </div></div>
+
+    <!-- . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  -->
+    <script type="text/javascript" src="lib/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="lib/underscore-min.js"></script>
+    <script type="text/javascript" src="lib/mathquill.js"></script>
+    <script type="text/javascript" src="lib/knockout-2.0.0.js"></script>
+    <script type="text/javascript" src="lib/knockout.mapping.js"></script>
+    <script type="text/javascript" src="lib/blackbird.js"></script>
+
+    <script type="text/javascript" src="lib/lawnchair.js"></script>
+    <script type="text/javascript" src="lib/lawnchair-dom.js"></script>    
+
+    <script type="text/javascript">
+      window.onerror = function() {
+        $('html').css('background', 'red');
+      };
+    </script>
+
+    <!-- . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  -->
+    <script type="text/javascript">
+
+      // main ViewModel that covers the library of available Quillbooks
+      var QBL = undefined;
+
+      // ViewModel for the currently open Quillbook
+      var QB = undefined;
+
+      // View Model for the currently open QuillProblem
+      var QP = undefined;
+
+      // Database
+      var DB = new Lawnchair({ name: 'MathQuill' }, function () { });
+
+      /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+      var _unique_id = 0;
+      
+      function UniqueId() {
+        return (new Date).getTime() + '_' + ++_unique_id;
+      }
+
+      /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- *
+       * QuillLibrary
+       * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+      function QuillLibrary() {
+        var self = this;
+
+        self.Books = []; // ko.observableArray();
+        self.SelectedBook = null;
+      }
+
+      /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- *
+       * QuillBook
+       * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+      function QuillBook(vm) {
+        var self = this;
+
+        self.Id = vm ? vm.Id() : '';
+        self.Title = vm ? vm.Title() : ''; // ko.observable('');
+
+        self.Problems = []; // ko.observableArray();
+
+        if (vm) {
+          $.each(vm.Problems(), function (idx, p) {
+            self.Problems.push(new QuillProblem(p));
+          });
+        }
+        // -- transient state ... don't care about persisting this
+        self.SelectedProblem = ''; // new QuillProblem();
+
+        self.IsDirty = false;
+/*
+        self.prototype.UpdateVM = function(vm) {
+          var self = this;
+
+          vm.Title(self.Title);
+
+          // ... remove all the problems and re-add them
+          vm.Problems.remove(function () { return true; });
+
+          $.each(Problems, function (idx, qp) {
+            vm.Problems.push(qp.UpdateVM(vm)
+          });
+        };
+*/
+      }
+
+      /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- *
+       * QuillProblem
+       * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+      function QuillProblem(vm) {
+        var self = this;
+
+        self.Id = vm ? vm.Id() : UniqueId();
+
+        self.Name = vm ? vm.Name() : ''; // ko.observable('');
+
+        self.Question = vm ? vm.Question() : '';
+        self.QuestionExpr = vm ? vm.QuestionExpr() : '';
+
+        self.Steps = []; // ko.observableArray();
+
+        if (vm) {
+          $.each(vm.Steps(), function (idx, s) {
+            self.Steps.push(new QuillStep(s));
+          });
+        }
+        // self.Steps.push({ Expression: ko.observable('1 + x^2') });
+
+        self.ShowRaw = false; // ko.observable(false);
+        self.Editting = -1; // ko.observable(-1);
+      }
+
+      /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- *
+       * QuillStep
+       * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+      function QuillStep(vm) {
+        var self = this;
+
+         self.Expression = vm ? vm.Expression() : '';
+         self.Comment = vm ? vm.Comment() : '';
+      }
+
+      /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+      //FUGLY HACK: monkey-patch jQuery to show/hide static math textareas when prepended
+      var _prepend = $.fn.prepend;
+      $.fn.prepend = function(el) {
+        if ($(el).hasClass('textarea') && $(document.body).hasClass('show-textareas'))
+          $(el).removeClass('textarea').addClass('shown-textarea');
+        else
+          $(el).removeClass('shown-textarea').addClass('textarea');
+        return _prepend.apply(this, arguments);
+      };
+
+/*
+      document.body.onload = function() {
+        setTimeout(function() {
+          $('#selection-performance .mathquill-textbox').each(function() {
+            var start = +new Date;
+            $('textarea', this).focus().trigger({type: 'keydown', ctrlKey: true, which: 65});
+            $(this).after(new Date - start);
+          });
+        });
+      };
+*/
+
+      /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- *
+       * ** Knockout custom bindings
+       * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+      ko.bindingHandlers.mathQuill = {
+        init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
+
+        },
+
+        update: function (element, valueAccessor, allingBingsAccessor, viewModel) {
+          var value = ko.utils.unwrapObservable(valueAccessor());
+
+          $(element).empty();
+          var $step = $("<span></span>").html(value).addClass("mathquill-embedded-latex");
+          $step.appendTo($(element));
+
+          $(element).mathquill();
+        }
+
+      };
+
+      /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+      function saveWorkbook() {
+          log.info("Saving workbook: " + QB.Title());
+
+          var qb_raw = new QuillBook(QB); // ko.mapping.toJS(QB);
+          DB.save({key: QB.Title(), value: qb_raw});
+
+          QB.IsDirty(false);
+      }
+
+      // update the Quillbook with the current state of the selected QuillProblem
+      function updateWorkbook() {
+        if (!QB) {
+          return;
+        }
+
+        if (QP) {
+          log.debug("Updating " + QP.Id());
+
+          // look at each problem in the workbook and decide which one to update
+          $.each(QB.Problems(), function (idx, qp) {
+
+            // .. this matches the currently active problem
+            if (qp.Id() === QP.Id()) {
+              log.debug("** matched problem **");
+              
+              // ** there must be a more efficient way of doing this **
+              var new_qp = new QuillProblem(QP); // ko.mapping.toJS(QP) doesn't work due to extra properties from the mapping plugin
+              ko.mapping.fromJS(new_qp, {}, QB.Problems()[idx]);
+            }
+          });
+        }
+
+        QB.IsDirty(true);
+      }
+
+      /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- *
+       * ** Set up UI
+       * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+      function InitializeUI()
+      {
+        log.debug("Initializing UI");
+
+        /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- *
+         * ** Workbook management
+         * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+        $("#btnAddWorkbook").bind("click", function() {
+          var title = $("#txtNewWorkbookName").val();
+
+          if (!title) { 
+              return;
+          }
+
+          if (_.any(QBL.Books(), function (qb) { return qb.Title() === title; })) {
+            alert("Workbook already exists");
+            return;
+          }
+
+          var qb = new QuillBook();
+
+          qb.Title = title;
+
+          log.debug("Adding workbook: " + qb.Title);
+
+          QB = ko.mapping.fromJS(qb)
+          QBL.Books().push(QB);
+          QBL.SelectedBook(QB);
+
+          QBL.SelectedBook.subscribe(onChangeWorkbook);
+
+          DB.save({key: qb.Title, value: qb});
+        });
+
+        $("#btnSaveWorkbook").bind("click", function () {
+          updateWorkbook();
+
+          saveWorkbook();
+        });
+
+        $("#btnDeleteWorkbook").bind("click", function ()  {
+          DB.remove(QB.Title());
+
+          QBL.Books.remove(QB);
+        });
+
+        $("#btnExport").bind("click", function ()  {
+          if (!QB) {
+            return;
+          }
+
+          var qb_raw = new QuillBook(QB); // ko.mapping.toJS(QB);
+          window.open( "data:text/json;charset=utf-8," + escape(JSON.stringify(qb_raw)))
+        });
+
+        /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- *
+         * ** Problem management
+         * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+        $("#btnAddProblem").bind("click", function() {
+          if (!QB) {
+            alert("No workbook selected");
+            return;
+          }
+
+          if ($("#txtNewProblemName").val() === '') {
+              return;
+          }
+
+          // -- create the new problem
+          var qp = new QuillProblem();
+
+          qp.Name = $("#txtNewProblemName").val();
+          qp.Question = $("#txtQuestion").val();
+          qp.QuestionExpr = $("#txtQuestionExpr").mathquill('latex'); 
+
+          log.debug("Adding problem: " + qp.Name + ' (' + qp.Id + ') to workbook ' + QB.Title());
+
+          // -- add it to the list of problems for this workbook
+          var qp_vm = ko.mapping.fromJS(qp);
+
+          QB.Problems.push(qp_vm);
+          QB.SelectedProblem = qp_vm;
+
+          // -- save the workbook
+          saveWorkbook();
+
+          $("#txtNewProblemName").val('');
+          $("#txtQuestion").val('');
+
+          $("#txtQuestionExpr").remove();
+          $("<span id='txtQuestionExpr' class='mathquill-editable'></span>").appendTo($("#txtQuestionExprContainer")).mathquill('editable');
+
+        });
+
+        /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- *
+         * ** Step management
+         * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+        // save an editor step
+        var save_fn = function() {
+          var $step, expr, comment, idx;
+
+          comment = $("#txtExplain").val();
+          expr = $("#txtEditor").mathquill('latex');
+
+          idx = QP.Editting();
+
+          log.info("saving step @ " + idx + " with " + expr);
+
+          if (idx === -1) {
+            QP.Steps.push({ Comment: ko.observable(comment), Expression: ko.observable(expr) });
+          }
+          else {
+            QP.Steps()[idx].Comment(comment);
+            QP.Steps()[idx].Expression(expr);
+          }
+
+          QB.IsDirty(true);
+        };
+
+        /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+        $('#btnSaveStep').click(save_fn);
+        $('#btnAddStep').click(save_fn);
+
+        $('#lnkShowRaw').click(function() { QP.ShowRaw(!QP.ShowRaw()); });
+
+        /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+        $('#btnClear').click(function() {
+          $("#txtEditor").remove();
+          $("<span id='txtEditor' class='mathquill-editable'></span>").appendTo($("#txtEditorContainer")).mathquill('editable');
+        });
+
+        $('#btnAddStepAtEnd').click(function() {
+          QP.Editting(-1);
+          
+          // $("#txtEditor").html("").mathquill('editable');          
+          save_fn();
+        });
+
+        /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+        $("#steps").delegate('.qb-delete-step', 'click', function (ev) {
+
+          var idx = $(ev.srcElement).parent().parent().index();
+
+          log.info("Deleting step " + idx);
+
+          QP.Steps.splice(idx, 1);
+
+          QB.IsDirty(true);
+        });
+
+        $("#steps").delegate('.qb-edit-step', 'click', function (ev) {
+
+          var idx = $(ev.srcElement).parent().parent().index();
+
+          log.info("Editting step " + idx);
+
+          QP.Editting(idx);
+          
+          var step = QP.Steps()[idx];
+
+          $("#txtEditor").remove();
+          var $editor = $("<span id='txtEditor' class='mathquill-editable'></span>");
+
+          $editor.appendTo($("#txtEditorContainer")).mathquill('editable');
+          $editor.mathquill('latex', step.Expression()).mathquill("redraw");
+
+          $("#txtExplain").val(step.Comment());
+        });
+      }
+
+      /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- *
+       * ** Set up
+       * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+      $(function () {
+
+        log.debug("Setting up models");
+
+        // -- set up the library
+        QBL = ko.mapping.fromJS(new QuillLibrary);
+
+        /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+        var onChangeProblem = function (qp_vm) {
+          if (!qp_vm) return;
+
+          // QP = v;
+          // ?? ko.applyBindings(QP, $("#quillproblem")[0]);
+          var qp = ko.mapping.toJS(qp_vm);
+          ko.mapping.fromJS(qp, QP);
+
+          log.info("selected problem " + QP.Name() + "(" + QP.Id() + ")");
+        };
+
+        /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+        var onChangeWorkbook = function (wb_vm) {
+          log.debug(">> onChangeWorkbook");
+
+          if (!wb_vm) return;
+          
+          // wb here is the object from the library's Workbooks observable array
+          var wb = ko.mapping.toJS(wb_vm);
+          ko.mapping.fromJS(wb, {}, QB);
+
+          log.info("selected workbook " + QB.Title());
+        };
+
+        /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- *
+         * ** Loading workbooks
+         * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+        DB.each(function(v) {
+          log.info("Loading workbook: " + v.key);
+
+          var qb = v.value;
+
+          qb.SelectedProblem = null;
+          qb.SelectedProblemIndex = -1;
+
+          qb.IsDirty = false;
+
+          // ... version updates
+          $.each(qb.Problems, function (idx, qp) {
+            if (!qp.Question) qp.Question = '';
+            if (!qp.QuestionExpr) qp.QuestionExpr = '';
+
+            $.each(qp.Steps, function (idx, step) {
+              if (!step.Comment) step.Comment = '';
+            });
+          });
+
+          QBL.Books.push(ko.mapping.fromJS(qb));
+        });
+
+        /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+        QB = ko.mapping.fromJS(new QuillBook());
+        QP = ko.mapping.fromJS(new QuillProblem());
+
+        /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+
+        // apply the view models to the appropriate parts of the DOM
+        ko.applyBindings(QBL, $("#library")[0]);
+        ko.applyBindings(QB,  $("#quillbook")[0]);
+        ko.applyBindings(QP,  $("#quillproblem")[0]);
+
+        // -- handle changes to the current workbook
+        QBL.SelectedBook.subscribe(onChangeWorkbook);
+        QB.SelectedProblem.subscribe(onChangeProblem);
+
+        InitializeUI();
+      });
+
+    </script>
+  </div></body>
+</html>
